@@ -8,15 +8,15 @@ public enum EProtocolID
     SC_REQ_USERINFO,           // 서버 -> 클라 : 유저 정보 요청
     CS_ANS_USERINFO,           // 클라 -> 서버 : 유저 정보 응답
     SC_ANS_USERLIST,           // 서버 -> 클라 : 
-//    CS_REQ_CHANGE_TEAM,        // 팀 변경이 필요 없음
+                               //    CS_REQ_CHANGE_TEAM,        // 팀 변경이 필요 없음
     REL_GAME_READY,            // 서버 -> 클라 : 게임 준비 상태 릴레이
     CS_GAME_READY_OK,          // 클라 -> 서버 : 게임 준비 완료
     SC_GAME_START,             // 서버 -> 클라 : 게임 시작
 
 
-//    REL_PLAYER_POSITION,       // 유닛 단위의 관리가 필요함
-//    REL_PLAYER_FIRE,           // 우리 게임에서 필요하지 않은 릴레이
-//    REL_PLAYER_ANIMATION,      // 서버 -> 클라 : 유닛 애니메이션 릴레이 ?우리쪽에서 애니메이션까지 관리할 필요가 없지 않을까?
+    //    REL_PLAYER_POSITION,       // 유닛 단위의 관리가 필요함
+    //    REL_PLAYER_FIRE,           // 우리 게임에서 필요하지 않은 릴레이
+    //    REL_PLAYER_ANIMATION,      // 서버 -> 클라 : 유닛 애니메이션 릴레이 ?우리쪽에서 애니메이션까지 관리할 필요가 없지 않을까?
     REL_PLAYER_DAMAGE,         // 서버 -> 클라 : 유닛 데미지 이벤트 릴레이
                                // 우리 게임에서 필요하지 않은 릴레이
     SC_GAME_END,               // 서버 -> 클라 : 게임 종료
@@ -34,8 +34,66 @@ public enum EProtocolID
 
     SC_ERROR_MESSAGE,          // 서버 -> 클라 : 에러 메시지 전달
 
+    //1203추가
+    CS_REQ_GAMEROOM_CREATE,    // 클라 -> 서버 : 게임룸 생성 요청
+    SC_ANS_GAMEROOM_CREATE,    // 서버 -> 클라 : 게임룸 생성 응답
+    CS_REQ_JOIN_GAMEROOM,      // 클라 -> 서버 : 게임룸 참여 요청
+    SC_ANS_JOIN_GAMEROOM,
 
 }
+/*
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct GameRoomInfo
+{
+    public int roomId;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 10)]
+    public string id;
+    // public ETeam team;
+    //public bool host;
+}*/
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public class PacketAnsJoinRoom : Packet
+{
+    public bool isFirst;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 10)]
+    public string id;
+    public PacketAnsJoinRoom()
+        : base((short)EProtocolID.SC_ANS_JOIN_GAMEROOM)
+    {
+    }
+}
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public class PacketReqJoinRoom : Packet
+{
+    public int roomId;
+    public int uid;
+    public PacketReqJoinRoom()
+        : base((short)EProtocolID.CS_REQ_JOIN_GAMEROOM)
+    {
+    }
+}
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public class PacketRoomInfo : Packet
+{
+    public int roomId;
+    public PacketRoomInfo()
+        : base((short)EProtocolID.SC_ANS_GAMEROOM_CREATE)
+    {
+    }
+}
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public class PacketReqCreateRoom : Packet
+{
+
+    public PacketReqCreateRoom()
+        : base((short)EProtocolID.CS_REQ_GAMEROOM_CREATE)
+    {
+    }
+}
+
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public class PacketReqUserInfo : Packet
@@ -55,7 +113,7 @@ public class PacketAnsUserInfo : Packet
 {
     [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 10)]
     public string id;
-   // public bool host;
+    // public bool host;
 
     public PacketAnsUserInfo()
         : base((short)EProtocolID.CS_ANS_USERINFO)
@@ -70,8 +128,8 @@ public struct UserInfo
     public int uid;
     [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 10)]
     public string id;
-   // public ETeam team;
-   //public bool host;
+    // public ETeam team;
+    //public bool host;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -90,7 +148,7 @@ public class PacketAnsUserList : Packet
 public class PacketGameReady : Packet
 {
     public PacketGameReady()
-        : base ((short)EProtocolID.REL_GAME_READY)
+        : base((short)EProtocolID.REL_GAME_READY)
     {
     }
 }
@@ -111,8 +169,8 @@ public struct GameStartInfo
     [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 10)]
     public string id;
     public int roomNum;
-   // public ETeam team;
-   // public Vector3Int position;
+    // public ETeam team;
+    // public Vector3Int position;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -135,7 +193,7 @@ public class PacketPlayerDamage : Packet
     public int attackUID;       // 때린 플레이어
     public int targetUID;       // 맞은 플레이어
     public PacketPlayerDamage()
-        : base ((short)EProtocolID.REL_PLAYER_DAMAGE)
+        : base((short)EProtocolID.REL_PLAYER_DAMAGE)
     {
     }
 }
@@ -229,7 +287,7 @@ public class PacketGridUpdate : Packet
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public class PacketGameEnd : Packet
 {
-  //  public ETeam winningTeam;
+    //  public ETeam winningTeam;
 
     public PacketGameEnd()
         : base((short)EProtocolID.SC_GAME_END)

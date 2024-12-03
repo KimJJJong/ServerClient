@@ -1,78 +1,4 @@
-/*using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
 
-
-public class Client : MonoBehaviour
-{
-    // TextMeshPro 전용 UI 요소 변수 선언
-    public TMP_InputField IPInputField;   // 서버 IP를 입력받는 TMP_InputField
-    public Button ConnectButton;          // 서버에 연결하기 위한 버튼
-    public TextMeshProUGUI StatusText;    // 연결 상태를 표시하는 TextMeshProUGUI
-
-    private NetClient _netClient;     // 네트워크 클라이언트 인스턴스
-    private ClientPeer _clientPeer;   // 서버와의 통신 처리 로직 담당 인스턴스
-
-    private void Start()
-    {
-        // 버튼 클릭 이벤트에 메서드 연결
-        ConnectButton.onClick.AddListener(OnConnectButtonClicked);
-
-        MainThreadDispatcher.Instance.Init();
-        PacketMessageDispatcher.Instance.Init();
-
-        // 네트워크 클라이언트 초기화
-        _netClient = new NetClient();
-        _netClient.onConnected += OnConnected; // 서버 연결 이벤트
-    }
-
-    private void OnConnectButtonClicked()
-    {
-        string serverIP = IPInputField.text;
-        if (string.IsNullOrEmpty(serverIP))
-        {
-            StatusText.text = "유효한 IP 주소를 입력하세요.";
-            return;
-        }
-
-        // 서버에 연결 시도
-        _netClient.Start(serverIP);
-        StatusText.text = "서버에 연결 시도 중...";
-    }
-
-    private void OnConnected(bool connected, UserToken userToken)
-    {
-        if (connected)
-        {
-            // 연결 성공 시 메시지 출력
-            StatusText.text = "서버에 연결되었습니다.";
-            
-            // UserToken을 이용하여 ClientPeer 생성 및 설정
-            _clientPeer = new ClientPeer(userToken);
-            userToken.SetPeer(_clientPeer);
-
-            // 연결된 이후 서버로 유저 정보 전송
-            SendUserInfo();
-        }
-        else
-        {
-            // 연결 실패 시 메시지 출력
-            StatusText.text = "서버 연결 실패.";
-        }
-    }
-
-    private void SendUserInfo()
-    {
-        // 서버에 유저 정보를 전송하는 패킷 생성 및 전송
-        PacketAnsUserInfo userInfoPacket = new PacketAnsUserInfo
-        {
-            id = "Player1"
-        };
-        _clientPeer.Send(userInfoPacket);
-        StatusText.text = "유저 정보를 서버로 전송했습니다.";
-    }
-}
-*/
 using UnityEditor;
 using UnityEngine;
 
@@ -136,6 +62,28 @@ public class Client: MonoBehaviour, IPeer
                     _ui.SetLobbyText(strUserList);
                 }
                 break;
+            case EProtocolID.SC_ANS_JOIN_GAMEROOM:
+                {
+                    PacketAnsJoinRoom packet = new PacketAnsJoinRoom();
+                    packet.ToPacket(buffer);
+                    //게임 룸에 참여했다는것 = 클라 로비 -> GameReady Panel
+                    _ui.SetUIState(UIManager.EUIState.Ready);
+                    _ui.ShowPlayer(packet.isFirst, packet.id);
+
+                }
+                break;
+
+            case EProtocolID.SC_ANS_GAMEROOM_CREATE:
+                {
+                    PacketRoomInfo packet = new PacketRoomInfo();
+                    packet.ToPacket(buffer);
+
+                    _ui.CreateRoom(packet.roomId);
+                    
+                    // roomId번째 게임 룸을 만들어 줘야함
+                }
+                break;
+
             case EProtocolID.REL_GAME_READY:
                 {
                     GameManager.Instance.GameReady();
