@@ -157,15 +157,16 @@ public class UIManager : MonoBehaviour
         nextRoomButtonPosition.y -= roomButtonSpacing;
     }
 
-    public void ShowPlayer(bool isFirst, string id)
+    public void ShowPlayer(/*bool isFirst,*/ PacketAnsJoinRoom packet)
     {
-        if (isFirst)
+        if (packet.isFirst)
         {
-            Player1.text = id;
+            Player1.text = packet.gameRoomInfo[0].id;
         }
         else
         {
-            Player2.text = id;
+            Player1.text = packet.gameRoomInfo[0].id;
+            Player2.text = packet.gameRoomInfo[1].id; 
         }
     }
 

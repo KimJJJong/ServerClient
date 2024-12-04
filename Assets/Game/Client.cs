@@ -68,7 +68,7 @@ public class Client: MonoBehaviour, IPeer
                     packet.ToPacket(buffer);
                     //게임 룸에 참여했다는것 = 클라 로비 -> GameReady Panel
                     _ui.SetUIState(UIManager.EUIState.Ready);
-                    _ui.ShowPlayer(packet.isFirst, packet.id);
+                    _ui.ShowPlayer(packet/*.isFirst, packet.gameRoomInfo[]*/);
 
                 }
                 break;
@@ -83,12 +83,12 @@ public class Client: MonoBehaviour, IPeer
                     // roomId번째 게임 룸을 만들어 줘야함
                 }
                 break;
-
+/*
             case EProtocolID.REL_GAME_READY:
                 {
                     GameManager.Instance.GameReady();
                 }
-                break;
+                break;*/
             case EProtocolID.SC_GAME_START:
                 {
 

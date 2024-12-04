@@ -1,6 +1,7 @@
-// SC : 서버->클라, CS : 클라->서버, REL : 릴레이
+// SC : 서버->클라, CS : 클라->서버, REL : 릴리스
 //using UnityEngine;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 //using UnityEngine.Playables;
 
 public enum EProtocolID
@@ -9,28 +10,22 @@ public enum EProtocolID
     CS_ANS_USERINFO,           // 클라 -> 서버 : 유저 정보 응답
     SC_ANS_USERLIST,           // 서버 -> 클라 : 
                                //    CS_REQ_CHANGE_TEAM,        // 팀 변경이 필요 없음
-    REL_GAME_READY,            // 서버 -> 클라 : 게임 준비 상태 릴레이
-    CS_GAME_READY_OK,          // 클라 -> 서버 : 게임 준비 완료
-    SC_GAME_START,             // 서버 -> 클라 : 게임 시작
 
 
-    //    REL_PLAYER_POSITION,       // 유닛 단위의 관리가 필요함
-    //    REL_PLAYER_FIRE,           // 우리 게임에서 필요하지 않은 릴레이
-    //    REL_PLAYER_ANIMATION,      // 서버 -> 클라 : 유닛 애니메이션 릴레이 ?우리쪽에서 애니메이션까지 관리할 필요가 없지 않을까?
-    REL_PLAYER_DAMAGE,         // 서버 -> 클라 : 유닛 데미지 이벤트 릴레이
-                               // 우리 게임에서 필요하지 않은 릴레이
+
+
+
+
+
+
     SC_GAME_END,               // 서버 -> 클라 : 게임 종료
 
     //Modified Packets
     SC_MANA_UPDATE,            // 서버 -> 클라 : 마나 상태 업데이트
     CS_SUMMON_UNIT,            // 클라 -> 서버 : 유닛 소환 요청
     REL_UNIT_SUMMONED,         // 서버 -> 클라 : 유닛 소환 완료 릴레이
-    REL_UNIT_STATE,            // 서버 -> 클라 : 유닛 상태 없데이트
-    REL_UNIT_ACTION,           // 서버 -> 클라 : 유닛 행동 이벤트
-    REL_GRID_UPDATE,           // 서버 -> 클라 : 맵 격자 점령 상태 업데이트
     SC_GAME_STATE_UPDATE,      // 서버 -> 클라 : 게임 전반 상태 업데이트
-    CS_PLAYER_ACTION,          // 클라 -> 서버 : 플레이어 액션 요청 (이동, 공격 등)
-    REL_ACTION_RESULT,         // 서버 -> 클라 : 플레이어 액션 결과 릴레이
+
 
     SC_ERROR_MESSAGE,          // 서버 -> 클라 : 에러 메시지 전달
 
@@ -38,30 +33,132 @@ public enum EProtocolID
     CS_REQ_GAMEROOM_CREATE,    // 클라 -> 서버 : 게임룸 생성 요청
     SC_ANS_GAMEROOM_CREATE,    // 서버 -> 클라 : 게임룸 생성 응답
     CS_REQ_JOIN_GAMEROOM,      // 클라 -> 서버 : 게임룸 참여 요청
-    SC_ANS_JOIN_GAMEROOM,
+    SC_ANS_JOIN_GAMEROOM,      // 서버 -> 클라 : 게임룸 참여 확인
 
+    //1203일 1900수정
+    CS_GAME_READY,             // 클라 -> 서버 : 게임 준비 상태 요청
+    REL_GAME_READY_OK,         // 서버 -> 클라 : 게임 준비 응답(동기화)
+    SC_GAME_START,             // 서버 -> 클라 : 게임 시작
+
+    //1204일 
+
+    //InGame
+    // Init
+    SC_PVP_INIT_STATE,
+
+    // 맞았으 아흑흑 줄래아파
+    CS_PVP_UNIT_DAMAGED,
+    REL_PVP_HANDLE_DAMAGE,
+
+    // Grid업뎃
+    CS_PVP_GRID_UPDATE,
+    REL_PVP_GRID_UPDATE,
+
+    // Mana관리
 }
-/*
+
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct GameRoomInfo
+public class PacketGridRelease : Packet
 {
-    public int roomId;
+
+    public PacketGridRelease()
+        : base((short)EProtocolID.REL_PVP_GRID_UPDATE)
+    {
+    }
+}
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public class PacketGridUpdate : Packet
+{
+
+
+    public PacketGridUpdate()
+        : base((short)EProtocolID.CS_PVP_GRID_UPDATE)
+    {
+    }
+}
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public class PacketHandlingDmage : Packet
+{
+    public int damagedIndex; //본인 유닛
+    public int attackIndex;  // 상대 유닛
+
+    public PacketHandlingDmage()
+        : base((short)EProtocolID.REL_PVP_HANDLE_DAMAGE)
+    {
+    }
+}
+
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public class PacketDamaged : Packet
+{
+    public UnitInfo damagedUnit; //본인 유닛
+    public UnitInfo attackUnit;  // 상대 유닛
+
+    public PacketDamaged()
+        : base((short)EProtocolID.CS_PVP_UNIT_DAMAGED)
+    {
+    }
+}
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public class PacketInitState : Packet
+{
+    //필요 정보
+    //TEAM.(RED/BULE)
+    //List<Unit>
+    //Mana
+    //Time
+    //Grid
+    //TowerHp
+
+    public ETeam myTeam; //팀
+    [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.Struct, SizeConst = Define.POOLING_SIZE)]
+    public UnitInfo[] unitInfos = new UnitInfo[Define.POOLING_SIZE]; //Pooling
+    public float currentMana;   //현재 마나
+    public float currentTime;   //현재 시간
     [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 10)]
-    public string id;
-    // public ETeam team;
-    //public bool host;
-}*/
+    public bool[][] grid;       //점령도   --  확실하게 정의할 필요가 있음
+    public float towerHp;       //탑 체력
+    public PacketInitState()
+        : base((short)EProtocolID.SC_PVP_INIT_STATE)
+    {
+    }
+}
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct UnitInfo
+{
+    public int unitUid;
+    public int index;   //pooling Manager의 위치
+    public Vector2Float position;
+    public float hp;
+    public float damage;
+    public float requireMana;
+}
+
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public class PacketAnsJoinRoom : Packet
 {
     public bool isFirst;
-    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 10)]
-    public string id;
+    //  [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 10)]
+    [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.Struct, SizeConst = 2)]
+    public GameRoomInfo[] gameRoomInfo = new GameRoomInfo[2];
     public PacketAnsJoinRoom()
         : base((short)EProtocolID.SC_ANS_JOIN_GAMEROOM)
     {
     }
+}
+// 마샬링으로 배열에 들어가는 요소는 struct로 해야 문제가 안생긴다. 
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct GameRoomInfo
+{
+    public int uid;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 10)]
+    public string id;
+
 }
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public class PacketReqJoinRoom : Packet
@@ -148,7 +245,7 @@ public class PacketAnsUserList : Packet
 public class PacketGameReady : Packet
 {
     public PacketGameReady()
-        : base((short)EProtocolID.REL_GAME_READY)
+        : base((short)EProtocolID.CS_GAME_READY)
     {
     }
 }
@@ -157,7 +254,7 @@ public class PacketGameReady : Packet
 public class PacketGameReadyOk : Packet
 {
     public PacketGameReadyOk()
-        : base((short)EProtocolID.CS_GAME_READY_OK)
+        : base((short)EProtocolID.REL_GAME_READY_OK)
     {
     }
 }
@@ -187,16 +284,7 @@ public class PacketGameStart : Packet
 }
 
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class PacketPlayerDamage : Packet
-{
-    public int attackUID;       // 때린 플레이어
-    public int targetUID;       // 맞은 플레이어
-    public PacketPlayerDamage()
-        : base((short)EProtocolID.REL_PLAYER_DAMAGE)
-    {
-    }
-}
+
 
 
 
@@ -242,45 +330,10 @@ public class PacketUnitSummoned : Packet
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class PacketUnitState : Packet
-{
-    public int unitUID;         // 업데이트 대상 유닛의 UID
-    public Vector3Int position;    // 유닛의 현재 위치
-    public int currentHealth;   // 유닛의 현재 체력
-
-    public PacketUnitState()
-        : base((short)EProtocolID.REL_UNIT_STATE)
-    {
-    }
-}
-
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class PacketUnitAction : Packet
-{
-    public int unitUID;         // 행동하는 유닛의 UID
-    public int targetUID;       // 공격 또는 스킬 대상의 UID
-    public int actionType;      // 행동 타입 (예: 공격, 스킬 등)
-
-    public PacketUnitAction()
-        : base((short)EProtocolID.REL_UNIT_ACTION)
-    {
-    }
-}
 
 
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class PacketGridUpdate : Packet
-{
-    public Vector2Int position;
-    public int ownerUID;
 
-    public PacketGridUpdate()
-        : base((short)EProtocolID.REL_GRID_UPDATE)
-    {
-    }
-}
 
 
 
@@ -297,7 +350,6 @@ public class PacketGameEnd : Packet
 
 
 ////////////////////
-///
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct Vector2Int
 {
@@ -305,6 +357,18 @@ public struct Vector2Int
     public int y;
 
     public Vector2Int(int x, int y)
+    {
+        this.x = x;
+        this.y = y;
+    }
+}
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct Vector2Float
+{
+    public float x;
+    public float y;
+
+    public Vector2Float(float x, float y)
     {
         this.x = x;
         this.y = y;
